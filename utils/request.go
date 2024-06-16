@@ -1,4 +1,4 @@
-package handler
+package utils
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func responseReturn(w http.ResponseWriter, statusCode int, body []byte) {
+func ResponseReturn(w http.ResponseWriter, statusCode int, body []byte) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if len(body) != 0 {
@@ -15,7 +15,7 @@ func responseReturn(w http.ResponseWriter, statusCode int, body []byte) {
 	}
 }
 
-func objectResponse(obj any, message string) *bytes.Buffer {
+func ObjectResponse(obj any, message string) *bytes.Buffer {
 
 	response := struct {
 		Message string    `json:"message,omitempty"`
