@@ -7,6 +7,9 @@ import (
 	"github.com/petshop-system/petshop-bff-mobile/configuration/environment"
 	"github.com/petshop-system/petshop-bff-mobile/handler"
 	"github.com/petshop-system/petshop-bff-mobile/handler/iphone/customer"
+	"github.com/petshop-system/petshop-bff-mobile/intergration"
+	customerService "github.com/petshop-system/petshop-bff-mobile/service/iphone/customer"
+	"github.com/petshop-system/petshop-bff-mobile/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"net/http"
@@ -36,18 +39,26 @@ func init() {
 
 func main() {
 
+	httpClient := utils.NewHttpClient(environment.Setting.DefaultClient.TimeOut, environment.Setting.DefaultClient.MaxIdleConns,
+		environment.Setting.DefaultClient.IdleConnTimeout)
+
+	customerIntegration := intergration.NewIntegration(httpClient, loggerSugar)
+
 	genericHandler := &handler.Generic{
 		LoggerSugar: loggerSugar,
 	}
 
-	iPhoneRegisterHandler := customer.NewRegisterHandler(loggerSugar)
+	iphoneCustomerService := customerService.NewIphoneCustomerService(loggerSugar,
+		&customerIntegration, environment.Setting.APIGatewayConfig.Host)
+
+	iPhoneCustomerHandler := customer.NewIPhoneCustomerHandler(loggerSugar, &iphoneCustomerService)
 
 	contextPath := environment.Setting.Server.Context
 	newRouter := handler.GetNewRouter(loggerSugar)
 	newRouter.GetChiRouter().Route(fmt.Sprintf("/%s", contextPath), func(r chi.Router) {
 		r.NotFound(genericHandler.NotFound)
 		r.Group(newRouter.AddGroupHandlerHealthCheck(genericHandler))
-		r.Group(newRouter.AddGroupHandlerIPhoneCustomer(&iPhoneRegisterHandler))
+		r.Group(newRouter.AddGroupHandlerIPhoneCustomer(&iPhoneCustomerHandler))
 	})
 
 	serverHttp := &http.Server{

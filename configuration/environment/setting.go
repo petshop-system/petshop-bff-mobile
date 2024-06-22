@@ -21,6 +21,16 @@ type setting struct {
 		PoolSize    int           `envconfig:"POOL_SIZE" default:"100"`
 		ReadTimeout time.Duration `envconfig:"READ_TIMEOUT" default:"2s"`
 	}
+
+	DefaultClient struct {
+		TimeOut         time.Duration `envconfig:"DEFAULT_TIMEOUT" default:"3s"`
+		MaxIdleConns    int           `envconfig:"DEFAULT_MAXIDLECONNS" default:"100"`
+		IdleConnTimeout time.Duration `envconfig:"DEFAULT_IDLECONNTIMEOUT" default:"30s"`
+	}
+
+	APIGatewayConfig struct {
+		Host string `envconfig:"API_GATEWAY_CONFIG_HOST" default:"http://localhost:9999/petshop-system/"`
+	}
 }
 
 var Setting setting

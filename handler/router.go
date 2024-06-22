@@ -32,11 +32,11 @@ func (router Router) AddGroupHandlerHealthCheck(ah *Generic) func(r chi.Router) 
 	}
 }
 
-func (router Router) AddGroupHandlerIPhoneCustomer(rh *customer.IPhoneRegisterHandler) func(r chi.Router) {
+func (router Router) AddGroupHandlerIPhoneCustomer(rh *customer.IPhoneCustomerHandler) func(r chi.Router) {
 	return func(r chi.Router) {
 		r.Route("/iphone/customer", func(r chi.Router) {
-			r.Get("/register", rh.RegisterScreen)
-			r.Post("/register", rh.Register)
+			r.Get("/create-screen", rh.CreateScreen)
+			r.Post("/create", rh.Create)
 		})
 	}
 }
