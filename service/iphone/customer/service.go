@@ -1,12 +1,14 @@
 package customer
 
+import "github.com/petshop-system/petshop-bff-mobile/domain"
+
 type IIphoneCustomerService interface {
-	CustomerValidateCreate(customerCreate NewCustomerServiceDomain) error
-	CustomerCreate(customerCreateService NewCustomerServiceDomain) (error, NewCustomerResponseServiceDomain)
+	CustomerValidateCreate(ctxControl domain.ContextControl, customerCreate NewCustomerServiceDomain) error
+	CustomerCreate(ctxControl domain.ContextControl, customerCreateService NewCustomerServiceDomain) (error, NewCustomerResponseServiceDomain)
 
-	AddressValidateCreate(newAddress NewAddressServiceDomain) error
-	AddressCreate(newAddress NewAddressServiceDomain) (error, NewAddressResponseServiceDomain)
+	AddressValidateCreate(ctxControl domain.ContextControl, newAddress NewAddressServiceDomain) error
+	AddressCreate(ctxControl domain.ContextControl, newAddress NewAddressServiceDomain) (error, NewAddressResponseServiceDomain)
 
-	PhoneValidateCreate(newPhone NewPhoneServiceDomain) error
-	PhoneCreate(newPhone NewPhoneServiceDomain) (error, NewPhoneResponseServiceDomain)
+	PhoneValidateCreate(ctxControl domain.ContextControl, newPhone NewPhoneServiceDomain) error
+	PhoneCreate(ctxControl domain.ContextControl, newPhone NewPhoneServiceDomain) (error, NewPhoneResponseServiceDomain)
 }

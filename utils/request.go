@@ -1,33 +1,20 @@
 package utils
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/petshop-system/petshop-bff-mobile/domain"
 	"net/http"
-	"time"
 )
 
-func ResponseReturn(w http.ResponseWriter, statusCode int, body []byte) {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if len(body) != 0 {
-		w.Write(body)
-	}
-}
+func GetRequestIDAndContext(r *http.Request) (string, domain.ContextControl) {
 
-func ObjectResponse(obj any, message string) *bytes.Buffer {
+	requestID := r.Context().Value(middleware.RequestIDHeader)
 
-	response := struct {
-		Message string    `json:"message,omitempty"`
-		Result  any       `json:"result,omitempty"`
-		Date    time.Time `json:"date,omitempty"`
-	}{
-		Message: message,
-		Result:  obj,
-		Date:    time.Now(),
+	ctxControl := domain.ContextControl{
+		Context: context.WithValue(context.Background(),
+			middleware.RequestIDHeader, requestID),
 	}
 
-	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(response)
-	return body
+	return requestID.(string), ctxControl
 }

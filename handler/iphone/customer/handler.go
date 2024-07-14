@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	InvalidationCreateCustomer = "there are some invalid customer info"
-	SuccessToCreateCustomer    = "success to create the customer"
-	InvalidationCreateAddress  = "there are some invalid address info"
-	InvalidationCreatePhone    = "there are some invalid phone info"
+	InvalidationCreateCustomer      = "there are some invalid customer info"
+	ValidationCreateCustomerSuccess = "validate success"
+	SuccessToCreateCustomer         = "success to create the customer"
+	InvalidationCreateAddress       = "there are some invalid address info"
+	InvalidationCreatePhone         = "there are some invalid phone info"
 )
 
 type IPhoneCustomerHandler struct {

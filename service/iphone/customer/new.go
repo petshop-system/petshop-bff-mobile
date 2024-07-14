@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/copier"
+	"github.com/petshop-system/petshop-bff-mobile/domain"
 	"github.com/petshop-system/petshop-bff-mobile/intergration"
 	"go.uber.org/zap"
 	"io"
@@ -12,7 +13,7 @@ import (
 
 type IphoneService struct {
 	loggerSugar         *zap.SugaredLogger
-	CustomerIntegration *intergration.Integration
+	CustomerIntegration intergration.IntegrationInterface
 	APIGatewayHost      string
 }
 
@@ -25,7 +26,7 @@ const (
 	PhoneCreateURN            = "/phone/create"
 )
 
-func NewIphoneCustomerService(loggerSugar *zap.SugaredLogger, customerIntegration *intergration.Integration,
+func NewIphoneCustomerService(loggerSugar *zap.SugaredLogger, customerIntegration intergration.IntegrationInterface,
 	apiGatewayHost string) IphoneService {
 
 	return IphoneService{
@@ -111,7 +112,7 @@ func (service *IphoneService) getURI(path string) string {
 	return fmt.Sprintf("%s%s", service.APIGatewayHost, path)
 }
 
-func (service *IphoneService) CustomerValidateCreate(customerCreate NewCustomerServiceDomain) error {
+func (service *IphoneService) CustomerValidateCreate(ctxControl domain.ContextControl, customerCreate NewCustomerServiceDomain) error {
 
 	var newCustomerReq newCustomerRequest
 	copier.Copy(&newCustomerReq, &customerCreate)
@@ -122,12 +123,12 @@ func (service *IphoneService) CustomerValidateCreate(customerCreate NewCustomerS
 	}
 
 	url := service.getURI(CustomerValidateCreateURN)
-	_, err := service.CustomerIntegration.Post(url, nil, &body)
+	_, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 
 	return err
 }
 
-func (service *IphoneService) CustomerCreate(customerCreateService NewCustomerServiceDomain) (error, NewCustomerResponseServiceDomain) {
+func (service *IphoneService) CustomerCreate(ctxControl domain.ContextControl, customerCreateService NewCustomerServiceDomain) (error, NewCustomerResponseServiceDomain) {
 
 	var newCustomerReq newCustomerRequest
 	copier.Copy(&newCustomerReq, &customerCreateService)
@@ -138,7 +139,7 @@ func (service *IphoneService) CustomerCreate(customerCreateService NewCustomerSe
 	}
 
 	url := service.getURI(CustomerCreateURN)
-	post, err := service.CustomerIntegration.Post(url, nil, &body)
+	post, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 	if err != nil {
 		return err, NewCustomerResponseServiceDomain{}
 	}
@@ -150,7 +151,7 @@ func (service *IphoneService) CustomerCreate(customerCreateService NewCustomerSe
 	return nil, newServiceResponse
 }
 
-func (service *IphoneService) AddressValidateCreate(newAddress NewAddressServiceDomain) error {
+func (service *IphoneService) AddressValidateCreate(ctxControl domain.ContextControl, newAddress NewAddressServiceDomain) error {
 
 	var newAddressReq newAddressRequest
 	copier.Copy(&newAddressReq, newAddress)
@@ -161,12 +162,12 @@ func (service *IphoneService) AddressValidateCreate(newAddress NewAddressService
 	}
 
 	url := service.getURI(AddressValidateCreateURN)
-	_, err := service.CustomerIntegration.Post(url, nil, &body)
+	_, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 
 	return err
 }
 
-func (service *IphoneService) AddressCreate(newAddress NewAddressServiceDomain) (error, NewAddressResponseServiceDomain) {
+func (service *IphoneService) AddressCreate(ctxControl domain.ContextControl, newAddress NewAddressServiceDomain) (error, NewAddressResponseServiceDomain) {
 
 	var newAddressReq newAddressRequest
 	copier.Copy(&newAddressReq, newAddress)
@@ -177,7 +178,7 @@ func (service *IphoneService) AddressCreate(newAddress NewAddressServiceDomain) 
 	}
 
 	url := service.getURI(AddressCreateURN)
-	post, err := service.CustomerIntegration.Post(url, nil, &body)
+	post, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 	if err != nil {
 		return err, NewAddressResponseServiceDomain{}
 	}
@@ -189,7 +190,7 @@ func (service *IphoneService) AddressCreate(newAddress NewAddressServiceDomain) 
 	return nil, newServiceResponse
 }
 
-func (service *IphoneService) PhoneValidateCreate(newPhone NewPhoneServiceDomain) error {
+func (service *IphoneService) PhoneValidateCreate(ctxControl domain.ContextControl, newPhone NewPhoneServiceDomain) error {
 
 	var newPhoneReq newPhoneRequest
 	copier.Copy(&newPhoneReq, &newPhone)
@@ -200,12 +201,12 @@ func (service *IphoneService) PhoneValidateCreate(newPhone NewPhoneServiceDomain
 	}
 
 	url := service.getURI(PhoneValidateCreateURN)
-	_, err := service.CustomerIntegration.Post(url, nil, &body)
+	_, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 
 	return err
 }
 
-func (service *IphoneService) PhoneCreate(newPhone NewPhoneServiceDomain) (error, NewPhoneResponseServiceDomain) {
+func (service *IphoneService) PhoneCreate(ctxControl domain.ContextControl, newPhone NewPhoneServiceDomain) (error, NewPhoneResponseServiceDomain) {
 
 	var newPhoneReq newPhoneRequest
 	copier.Copy(&newPhoneReq, &newPhone)
@@ -216,7 +217,7 @@ func (service *IphoneService) PhoneCreate(newPhone NewPhoneServiceDomain) (error
 	}
 
 	url := service.getURI(PhoneCreateURN)
-	post, err := service.CustomerIntegration.Post(url, nil, &body)
+	post, err := service.CustomerIntegration.Post(ctxControl, url, nil, &body)
 	if err != nil {
 		return err, NewPhoneResponseServiceDomain{}
 	}

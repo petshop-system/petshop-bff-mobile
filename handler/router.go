@@ -37,6 +37,7 @@ func (router Router) AddGroupHandlerIPhoneCustomer(rh *customer.IPhoneCustomerHa
 		r.Route("/iphone/customer", func(r chi.Router) {
 			r.Get("/create-screen", rh.CreateScreen)
 			r.Post("/create", rh.Create)
+			r.Post("/validate-create", rh.CustomerValidateCreate)
 		})
 	}
 }

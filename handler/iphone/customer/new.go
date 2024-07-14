@@ -9,21 +9,34 @@ import (
 )
 
 type NewCustomerCreateRequest struct {
+	NewCustomer
+	Address NewAddressRequest `json:"address"`
+	Phone   NewPhoneRequest   `json:"phone"`
+}
+
+type NewCustomer struct {
 	Name       string `json:"name"`
 	Email      string `json:"email"`
 	Document   string `json:"document"`
 	PersonType string `json:"person_type"`
 	ContractID int64  `json:"contract_id"`
-	Address    struct {
-		Street  string `json:"street"`
-		Number  string `json:"number"`
-		Zipcode string `json:"zipcode"`
-	} `json:"address"`
-	Phone struct {
-		Number    string `json:"number"`
-		CodeArea  string `json:"code_area"`
-		PhoneType string `json:"phone_type"`
-	} `json:"phone"`
+}
+
+type NewCustomerResponse struct {
+	ID int64
+	NewCustomer
+}
+
+type NewAddressRequest struct {
+	Street  string `json:"street"`
+	Number  string `json:"number"`
+	Zipcode string `json:"zipcode"`
+}
+
+type NewPhoneRequest struct {
+	Number    string `json:"number"`
+	CodeArea  string `json:"code_area"`
+	PhoneType string `json:"phone_type"`
 }
 
 type NewCustomerCreateResponse struct {
@@ -54,14 +67,18 @@ func (h *IPhoneCustomerHandler) CreateScreen(w http.ResponseWriter, r *http.Requ
 
 func (h *IPhoneCustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 
+	requestID, ctxControl := utils.GetRequestIDAndContext(r)
+
+	logger := h.loggerSugar.With("request_id", requestID)
+
 	var customerCreateRequest NewCustomerCreateRequest
 	json.NewDecoder(r.Body).Decode(&customerCreateRequest)
 
 	// validate address
 	var newAddressServiceDomain customer.NewAddressServiceDomain
 	_ = copier.Copy(&newAddressServiceDomain, &customerCreateRequest.Address)
-	if err := h.iphoneService.AddressValidateCreate(newAddressServiceDomain); err != nil {
-		h.loggerSugar.Errorw(InvalidationCreateAddress, "error", err.Error())
+	if err := h.iphoneService.AddressValidateCreate(ctxControl, newAddressServiceDomain); err != nil {
+		logger.Errorw(InvalidationCreateAddress, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreateAddress)
 		utils.ResponseReturn(w, http.StatusBadRequest, response.Bytes())
 		return
@@ -70,8 +87,8 @@ func (h *IPhoneCustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// validate customer
 	var newCustomerServiceDomain customer.NewCustomerServiceDomain
 	_ = copier.Copy(&newCustomerServiceDomain, &customerCreateRequest)
-	if err := h.iphoneService.CustomerValidateCreate(newCustomerServiceDomain); err != nil {
-		h.loggerSugar.Errorw(InvalidationCreateCustomer, "error", err.Error())
+	if err := h.iphoneService.CustomerValidateCreate(ctxControl, newCustomerServiceDomain); err != nil {
+		logger.Errorw(InvalidationCreateCustomer, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreateCustomer)
 		utils.ResponseReturn(w, http.StatusBadRequest, response.Bytes())
 		return
@@ -81,26 +98,26 @@ func (h *IPhoneCustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var newPhoneServiceDomain customer.NewPhoneServiceDomain
 	_ = copier.Copy(&newPhoneServiceDomain, &customerCreateRequest.Phone)
 	newPhoneServiceDomain.UserType = "customer"
-	if err := h.iphoneService.PhoneValidateCreate(newPhoneServiceDomain); err != nil {
-		h.loggerSugar.Errorw(InvalidationCreatePhone, "error", err.Error())
+	if err := h.iphoneService.PhoneValidateCreate(ctxControl, newPhoneServiceDomain); err != nil {
+		logger.Errorw(InvalidationCreatePhone, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreatePhone)
 		utils.ResponseReturn(w, http.StatusBadRequest, response.Bytes())
 		return
 	}
 
 	// create address
-	err, newAddressResponseServiceDomain := h.iphoneService.AddressCreate(newAddressServiceDomain)
+	err, newAddressResponseServiceDomain := h.iphoneService.AddressCreate(ctxControl, newAddressServiceDomain)
 	if err != nil {
-		h.loggerSugar.Errorw(InvalidationCreateAddress, "error", err.Error())
+		logger.Errorw(InvalidationCreateAddress, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreateAddress)
 		utils.ResponseReturn(w, http.StatusInternalServerError, response.Bytes())
 	}
 
 	// create customer
 	newCustomerServiceDomain.AddressID = newAddressResponseServiceDomain.ID
-	err, newCustomerResponseServiceDomain := h.iphoneService.CustomerCreate(newCustomerServiceDomain)
+	err, newCustomerResponseServiceDomain := h.iphoneService.CustomerCreate(ctxControl, newCustomerServiceDomain)
 	if err != nil {
-		h.loggerSugar.Errorw(InvalidationCreateCustomer, "error", err.Error())
+		logger.Errorw(InvalidationCreateCustomer, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreateCustomer)
 		utils.ResponseReturn(w, http.StatusInternalServerError, response.Bytes())
 		return
@@ -108,9 +125,9 @@ func (h *IPhoneCustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// create phone
 	newPhoneServiceDomain.UserID = newCustomerResponseServiceDomain.ID
-	err, newPhoneResponseServiceDomain := h.iphoneService.PhoneCreate(newPhoneServiceDomain)
+	err, newPhoneResponseServiceDomain := h.iphoneService.PhoneCreate(ctxControl, newPhoneServiceDomain)
 	if err != nil {
-		h.loggerSugar.Errorw(InvalidationCreatePhone, "error", err.Error())
+		logger.Errorw(InvalidationCreatePhone, "error", err.Error())
 		response := utils.ObjectResponse(err.Error(), InvalidationCreatePhone)
 		utils.ResponseReturn(w, http.StatusInternalServerError, response.Bytes())
 		return
@@ -121,10 +138,36 @@ func (h *IPhoneCustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	_ = copier.Copy(&newCustomerCreateResponse.Address, &newAddressResponseServiceDomain)
 	_ = copier.Copy(&newCustomerCreateResponse.Phone, &newPhoneResponseServiceDomain)
 
-	h.loggerSugar.Infow(SuccessToCreateCustomer, "id", newCustomerCreateResponse.ID,
+	logger.Infow(SuccessToCreateCustomer, "id", newCustomerCreateResponse.ID,
 		"document", newCustomerCreateResponse.Document, "person_type", newCustomerCreateResponse.PersonType)
 
 	response := utils.ObjectResponse(newCustomerCreateResponse, SuccessToCreateCustomer)
 	utils.ResponseReturn(w, http.StatusCreated, response.Bytes())
+
+}
+
+func (h *IPhoneCustomerHandler) CustomerValidateCreate(w http.ResponseWriter, r *http.Request) {
+
+	requestID, ctxControl := utils.GetRequestIDAndContext(r)
+
+	logger := h.loggerSugar.With("request_id", requestID)
+
+	var newCustomer NewCustomer
+	json.NewDecoder(r.Body).Decode(&newCustomer)
+
+	// validate customer
+	var newCustomerServiceDomain customer.NewCustomerServiceDomain
+	_ = copier.Copy(&newCustomerServiceDomain, &newCustomer)
+	if err := h.iphoneService.CustomerValidateCreate(ctxControl, newCustomerServiceDomain); err != nil {
+		logger.Errorw(InvalidationCreateCustomer, "error", err.Error())
+		response := utils.ObjectResponse(err.Error(), InvalidationCreateCustomer)
+		utils.ResponseReturn(w, http.StatusBadRequest, response.Bytes())
+		return
+	}
+
+	logger.Infow(ValidationCreateCustomerSuccess, "document", newCustomerServiceDomain.Document,
+		"person_type", newCustomerServiceDomain.PersonType)
+
+	utils.ResponseReturn(w, http.StatusOK, nil)
 
 }

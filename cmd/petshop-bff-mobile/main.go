@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/petshop-system/petshop-bff-mobile/configuration/environment"
 	"github.com/petshop-system/petshop-bff-mobile/handler"
@@ -55,11 +56,14 @@ func main() {
 
 	contextPath := environment.Setting.Server.Context
 	newRouter := handler.GetNewRouter(loggerSugar)
-	newRouter.GetChiRouter().Route(fmt.Sprintf("/%s", contextPath), func(r chi.Router) {
-		r.NotFound(genericHandler.NotFound)
-		r.Group(newRouter.AddGroupHandlerHealthCheck(genericHandler))
-		r.Group(newRouter.AddGroupHandlerIPhoneCustomer(&iPhoneCustomerHandler))
-	})
+	newRouter.GetChiRouter().With(middleware.RequestID).
+		Route(fmt.Sprintf("/%s", contextPath), func(r chi.Router) {
+
+			r.NotFound(genericHandler.NotFound)
+			r.Group(newRouter.AddGroupHandlerHealthCheck(genericHandler))
+			r.Group(newRouter.AddGroupHandlerIPhoneCustomer(&iPhoneCustomerHandler))
+
+		})
 
 	serverHttp := &http.Server{
 		Addr:           fmt.Sprintf(":%s", environment.Setting.Server.Port),
